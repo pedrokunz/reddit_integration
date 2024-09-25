@@ -1,9 +1,11 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/pedrokunz/canoe_reddit_integration/api/controller/login"
 	redditpostreadlist "github.com/pedrokunz/canoe_reddit_integration/api/controller/reddit_post_read_list"
 	redditpostsync "github.com/pedrokunz/canoe_reddit_integration/api/controller/reddit_post_sync"
@@ -43,5 +45,5 @@ func New(repositories repository.Repositories) {
 		middleware.AuthorizeAttribute("reddit.post.read_list", "true"),
 		redditpostreadlist.Execute(repositories.RedditPostReadList))
 
-	r.Run(":8080")
+	log.Fatal(r.Run(":8080"))
 }

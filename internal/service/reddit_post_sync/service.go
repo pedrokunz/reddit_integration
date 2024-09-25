@@ -39,7 +39,7 @@ func (s Service) FetchRedditPosts(ctx context.Context, input Input) (*Output, er
 	}
 
 	// Add headers
-	req.Header.Set("User-Agent", "Windows:CanoeRedditIntegration:1.0 (by /u/Stunning_Commission4)")
+	req.Header.Set("User-Agent", "CanoeRedditIntegration:1.0 (by /u/Stunning_Commission4)")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
