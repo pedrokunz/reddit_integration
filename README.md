@@ -53,7 +53,7 @@ We have a product that collects reddit.com posts and categorizes them. Depending
     REDDIT_USERNAME=your_reddit_username
     REDDIT_PASSWORD=your_reddit_password
     ```
-4. Run docker compose up 
+4. Run `docker compose up` in the root directory
    - Two containers will be created, one for the app and another for the database
 5. Run the following CURL command to get the access token:
     ```shell
