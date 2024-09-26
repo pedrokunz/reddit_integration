@@ -2,19 +2,22 @@ package redditpostsync
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
+	"os"
+
+	"github.com/vartanbeno/go-reddit/v2/reddit"
 
 	"github.com/pedrokunz/canoe_reddit_integration/internal/domain"
 )
 
-type Service struct{}
+type Service struct {
+	Client *reddit.Client
+}
 
 type Input struct {
-	Subreddit string
+	Subreddit          string
+	LatestPostIDSynced string
 }
 
 type Output struct {
@@ -22,69 +25,80 @@ type Output struct {
 }
 
 func New() Service {
-	return Service{}
+	credentials := reddit.Credentials{
+		ID:       os.Getenv("REDDIT_CLIENT_ID"),
+		Secret:   os.Getenv("REDDIT_CLIENT_SECRET"),
+		Username: os.Getenv("REDDIT_USERNAME"),
+		Password: os.Getenv("REDDIT_PASSWORD"),
+	}
+	client, _ := reddit.NewClient(credentials)
+
+	return Service{
+		Client: client,
+	}
 }
 
 func (s Service) FetchRedditPosts(ctx context.Context, input Input) (*Output, error) {
-	url := fmt.Sprintf("https://www.reddit.com/r/%s.json", input.Subreddit)
+	return s.fetchRedditPostsRecursive(ctx, input.Subreddit, "", input.LatestPostIDSynced, 100)
+}
 
-	// Create HTTP client
-	client := &http.Client{}
+func (s Service) fetchRedditPostsRecursive(
+	ctx context.Context,
+	subreddit, after, latestPostIDSynced string,
+	limit int,
+) (*Output, error) {
+	options := &reddit.ListOptions{
+		After: after,
+		Limit: limit,
+	}
 
-	// Make request
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	newPosts, resp, err := s.Client.Subreddit.NewPosts(ctx, subreddit, options)
 	if err != nil {
-		log.Printf("Error creating request: %v", err)
 		return nil, err
 	}
 
-	// Add headers
-	req.Header.Set("User-Agent", "CanoeRedditIntegration:1.0 (by /u/Stunning_Commission4)")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Error making request: %v", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Error reading response body: %v", err)
-		return nil, err
-	}
-
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		log.Println(string(body))
-		return nil, fmt.Errorf("failed to fetch posts: %s", resp.Status)
-	}
-
-	// Parse JSON response
-	var redditResponse struct {
-		Data struct {
-			Children []struct {
-				Data domain.Post `json:"data"`
-			} `json:"children"`
-		} `json:"data"`
-	}
-
-	err = json.Unmarshal(body, &redditResponse)
-	if err != nil {
-		log.Printf("Error parsing JSON response: %v", err)
-		return nil, err
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("reddit API returned status code %d", resp.StatusCode)
 	}
 
 	// Map to domain.Post
 	var posts []domain.Post
-	for _, child := range redditResponse.Data.Children {
-		posts = append(posts, child.Data)
+	for _, post := range newPosts {
+		if post.FullID == latestPostIDSynced {
+			return &Output{
+				Posts: posts,
+			}, nil
+		}
+
+		posts = append(posts, domain.Post{
+			Title:    post.Title,
+			Author:   post.Author,
+			Origin:   domain.Reddit,
+			SyncedAt: post.Created.UTC(),
+			Metadata: map[string]any{
+				"reddit_id":  post.FullID,
+				"reddit_url": post.URL,
+				"subreddit":  subreddit,
+			},
+		})
 	}
 
-	log.Printf("Fetched %d posts for subreddit %s", len(posts), input.Subreddit)
+	log.Printf("Fetched %d posts for subreddit %s", len(posts), subreddit)
+
+	// If there is an after value, fetch the next page
+	if resp.After != "" {
+		nextOutput, err := s.fetchRedditPostsRecursive(
+			ctx,
+			subreddit,
+			resp.After,
+			"",
+			limit,
+		)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, nextOutput.Posts...)
+	}
 
 	return &Output{
 		Posts: posts,
