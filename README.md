@@ -1,41 +1,51 @@
 # canoe_reddit_integration
+
 Canoe Integrations Tech Assessment
 
 ## Overview
 
-A critical function of Canoe’s business relies on programmatically retrieving documents/data from external sources, i.e., APIs and Web Portals on behalf of multiple customers.
+A critical function of Canoe’s business relies on programmatically retrieving documents/data from external sources,
+i.e., APIs and Web Portals on behalf of multiple customers.
 These use cases present a number of challenges:
 
- - Enforcing data access control for multiple customers
- - Reliance on 3rd party sites/services that could change, without warning, or be unavailable
- - Throttling & rate limiting
- - Error handling
- - Ensuring all new documents are downloaded
- - Ensuring no documents are downloaded more than once
- - Scaling as the number of documents that need to be downloaded continues to grow
+- Enforcing data access control for multiple customers
+- Reliance on 3rd party sites/services that could change, without warning, or be unavailable
+- Throttling & rate limiting
+- Error handling
+- Ensuring all new documents are downloaded
+- Ensuring no documents are downloaded more than once
+- Scaling as the number of documents that need to be downloaded continues to grow
 
 ## Task
 
-We have a product that collects reddit.com posts and categorizes them. Depending on information about the post found in it’s metadata available through an API, we route it to a particular internal team. The task:
+We have a product that collects reddit.com posts and categorizes them. Depending on information about the post found in
+it’s metadata available through an API, we route it to a particular internal team. The task:
 
- - Since https://reddit.com can return any of their subreddit pages as JSON by appending .json to the URL, please use this as the “API” to integrate with. E.g. the computerscience subreddit page can be accessed as JSON like this: https://www.reddit.com/r/computerscience.json
- - Have the integration you build take a list of subreddits (e.g. computerscience in the above URL), connect to each, and save the title and author for each post listed on the page.
- - Each run of the app should save the list of posts found for each subreddit with their title and author , along with the subreddit URL and date of the run.
- - Certain subreddits have far more posts than others, for example https://www.reddit.com/r/pics/. How would your design account for keeping the local list of categorized posts up-to-date with these much larger volume subreddits that change a lot?
- - Use a design pattern that will allow your integration to be easily extensible to support multiple 3rd party APIs in the future. E.g. imagine we wanted to also pull titles and authors from the LinkedIn API
- - Use a SQL database of your choice to maintain the saved data for each run.
+- Since https://reddit.com can return any of their subreddit pages as JSON by appending .json to the URL, please use
+  this as the “API” to integrate with. E.g. the computerscience subreddit page can be accessed as JSON like
+  this: https://www.reddit.com/r/computerscience.json
+- Have the integration you build take a list of subreddits (e.g. computerscience in the above URL), connect to each, and
+  save the title and author for each post listed on the page.
+- Each run of the app should save the list of posts found for each subreddit with their title and author , along with
+  the subreddit URL and date of the run.
+- Certain subreddits have far more posts than others, for example https://www.reddit.com/r/pics/. How would your design
+  account for keeping the local list of categorized posts up-to-date with these much larger volume subreddits that
+  change a lot?
+- Use a design pattern that will allow your integration to be easily extensible to support multiple 3rd party APIs in
+  the future. E.g. imagine we wanted to also pull titles and authors from the LinkedIn API
+- Use a SQL database of your choice to maintain the saved data for each run.
 
 ## How to run
 
 1. Clone the repository
 2. Create a Reddit app to get the client id and client secret
-   - Go to https://www.reddit.com/prefs/apps
-   - Click on "Create App" or "Create another app..."
-   - Select "script" as the app type
-   - Fill in the required fields and click on "Create app"
-   - Under the app name, you will find the client id 
-   - The client secret will be under the "secret" field
-     ![image](https://github.com/user-attachments/assets/f68ee8b4-7983-45d8-accb-ba1c48c49894)
+    - Go to https://www.reddit.com/prefs/apps
+    - Click on "Create App" or "Create another app..."
+    - Select "script" as the app type
+    - Fill in the required fields and click on "Create app"
+    - Under the app name, you will find the client id
+    - The client secret will be under the "secret" field
+      ![image](https://github.com/user-attachments/assets/f68ee8b4-7983-45d8-accb-ba1c48c49894)
 
 3. Create a .env file following the example:
     ```
@@ -54,7 +64,11 @@ We have a product that collects reddit.com posts and categorizes them. Depending
     REDDIT_PASSWORD=your_reddit_password
     ```
 4. Run `docker compose up` in the root directory
-   - Two containers will be created, one for the app and another for the database
+    - Two containers will be created, one for the app and another for the database
+    - The app will be available at `localhost:8080`
+       ```shell
+      go_app       | [GIN-debug] Listening and serving HTTP on :8080
+      ```
 5. Run the following CURL command to get the access token:
     ```shell
     curl --location 'localhost:8080/login' \
@@ -95,3 +109,47 @@ We have a product that collects reddit.com posts and categorizes them. Depending
    go_app       | 2024/09/26 18:13:53 No new posts for subreddit computerscience
    go_app       | 2024/09/26 18:13:53 No new posts for subreddit pics
    ```
+## Design
+
+The application is designed to be scalable and extensible. The application is divided into the following layers:
+
+- **API Layer**: This layer is responsible for handling the HTTP requests and responses. It uses the Gin framework to
+  handle the requests and responses. The API layer is responsible for validating the input, authenticating the user,
+  and calling the service layer to perform the post synchronization.
+- **Service Layer**: This layer is responsible for the business logic of the application. It contains the logic for
+  synchronizing the posts from Reddit and saving them to the database. The service layer is designed to be extensible
+  so that it can support multiple 3rd party APIs in the future.
+- **Repository Layer**: This layer is responsible for interacting with the database. It contains the logic for saving and
+  retrieving the posts from the database. The repository layer is designed to be extensible so that it can support
+  different types of databases.
+- **Model Layer**: This layer contains the data models used by the application. It defines the structure of the data
+  stored in the database.
+
+## Notes
+
+- Data access control for multiple customers
+  > The application is designed to support multiple customers by using JWT
+    tokens for authentication. Each user is assigned a unique customer ID, roles, and permissions. The application enforces
+    data access control by checking the user's permissions before allowing them to access the data.
+- Throttling & rate limiting
+  > The application uses a rate limiter middleware to limit the number of requests that can be made to the API. This
+    helps prevent abuse and ensures that the application can handle a large number of requests without being
+    overwhelmed.
+- Error handling
+  > The application uses structured error handling to handle errors that occur during the execution of the application.
+    Errors are logged and returned to the client with an appropriate HTTP status code and error message. This also helps
+    ensure that the application is robust and can recover from errors gracefully.
+- Ensuring all new documents are downloaded and no documents are downloaded more than once
+  > The application uses a synchronization mechanism to ensure that all new posts are downloaded from Reddit. The
+    application keeps track of the last synchronization time for each subreddit and only downloads new posts that have
+    been added since the last synchronization.
+- Scaling as the number of documents that need to be downloaded continues to grow
+  > The application is designed to be scalable by using a microservices architecture. The application can be deployed
+    on multiple servers and scaled horizontally to handle a large number of requests. The application is also designed
+    to be extensible so that it can support multiple 3rd party APIs in the future.
+- Further improvements
+  > The application can be further improved by adding support for more 3rd party APIs, adding more features such as
+    filtering and sorting the posts, and improving the error handling and logging, and improving some specific parts of
+    the code like the password encryption and comparison, reading the customer IDs from a repository, and adding a new 
+    layer for use cases only, so we can have multiple different entry points for the same use case, for example, 
+    we can trigger the sync by a scheduled routine from a crontab or similar.
