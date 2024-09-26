@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
 	redditpostsync "github.com/pedrokunz/canoe_reddit_integration/internal/repository/reddit_post_sync"
 	service "github.com/pedrokunz/canoe_reddit_integration/internal/service/reddit_post_sync"
 )
@@ -27,11 +28,28 @@ func Execute(repository redditpostsync.Repository) func(c *gin.Context) {
 
 		for _, subreddit := range subreddits {
 			go func(subreddit string) {
+				postReadLatestSyncedIDOutput, err := repository.PostReadLatestSyncedID(redditpostsync.PostReadLatestSyncedIDInput{
+					Subreddit: subreddit,
+				})
+				if err != nil {
+					log.Printf("Error reading latest synced ID for subreddit %s: %s\n", subreddit, err)
+					return
+				}
+
 				serviceOutput, err := service.New().FetchRedditPosts(
 					context.Background(),
-					service.Input{Subreddit: subreddit})
+					service.Input{
+						Subreddit:          subreddit,
+						LatestPostIDSynced: postReadLatestSyncedIDOutput.LatestPostIDSynced,
+					},
+				)
 				if err != nil {
 					log.Printf("Error fetching posts for subreddit %s: %s\n", subreddit, err)
+					return
+				}
+
+				if len(serviceOutput.Posts) == 0 {
+					log.Printf("No new posts for subreddit %s\n", subreddit)
 					return
 				}
 
@@ -43,7 +61,7 @@ func Execute(repository redditpostsync.Repository) func(c *gin.Context) {
 					return
 				}
 
-				log.Printf("Successfully saved %d posts for subreddit %s\n", len(repositoryOutput.Posts), subreddit)
+				log.Printf("Successfully saved %d posts for subreddit %s\n", repositoryOutput.PostAmountCreated, subreddit)
 			}(subreddit)
 		}
 
