@@ -69,3 +69,27 @@ We have a product that collects reddit.com posts and categorizes them. Depending
    --header 'Authorization: {{token}}'
     ```
 7. You can see the log outputs in the Docker console and the data will be in the database
+   ```shell
+   go_app       | [GIN] 2024/09/26 - 18:13:22 | 200 |     8.71779ms |      172.19.0.1 | POST     "/login"
+   go_app       | [GIN] 2024/09/26 - 18:13:28 | 200 |      52.689µs |      172.19.0.1 | POST     "/v1/reddit/posts/sync?subreddits=computerscience,pics"
+   go_app       | 2024/09/26 18:13:30 Fetched 100 posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:30 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:32 Fetched 100 posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:32 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:33 Fetched 100 posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:34 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:35 Fetched 100 posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:36 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:36 Fetched 100 posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:38 Fetched 11 posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:38 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:38 Successfully saved 511 posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:40 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:42 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:44 Fetched 100 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:45 Fetched 33 posts for subreddit pics
+   go_app       | 2024/09/26 18:13:45 Successfully saved 833 posts for subreddit pics
+   go_app       | [GIN] 2024/09/26 - 18:13:51 | 200 |       70.73µs |      172.19.0.1 | POST     "/v1/reddit/posts/sync?subreddits=computerscience,pics"
+   go_app       | 2024/09/26 18:13:53 No new posts for subreddit computerscience
+   go_app       | 2024/09/26 18:13:53 No new posts for subreddit pics
+   ```
