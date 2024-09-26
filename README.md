@@ -149,7 +149,8 @@ The application is designed to be scalable and extensible. The application is di
     to be extensible so that it can support multiple 3rd party APIs in the future.
 - Further improvements
   > The application can be further improved by adding support for more 3rd party APIs, adding more features such as
-    filtering and sorting the posts, and improving the error handling and logging, and improving some specific parts of
+    filtering and sorting the posts, and improving the error handling and logging, improving some specific parts of
     the code like the password encryption and comparison, reading the customer IDs from a repository, and adding a new 
     layer for use cases only, so we can have multiple different entry points for the same use case, for example, 
-    we can trigger the sync by a scheduled routine from a crontab or similar.
+    we can trigger the sync by a scheduled routine from a crontab or similar, and also improving the async operations to .
+    by using channels in the existing goroutines, so we can start storing data as soon they are fetched from the API.   
