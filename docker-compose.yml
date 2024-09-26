@@ -1,17 +1,19 @@
-version: '3.8'
-
 services:
   app:
     image: golang:1.23.1
     container_name: go_app
-    environment:
-      JWT_KEY: "secret"
+    env_file:
+      - .env
     working_dir: /app
+    ports:
+      - "8080:8080"
     volumes:
       - .:/app
     command: go run main.go
     depends_on:
       - db
+    networks:
+      - local
 
   db:
     image: postgres:latest
@@ -25,6 +27,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./internal/repository/postgres/migration:/docker-entrypoint-initdb.d
+    networks:
+      - local
 
 volumes:
   postgres_data:
+
+networks:
+  local:
+    driver: bridge
