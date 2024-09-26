@@ -35,6 +35,8 @@ We have a product that collects reddit.com posts and categorizes them. Depending
    - Fill in the required fields and click on "Create app"
    - Under the app name, you will find the client id 
    - The client secret will be under the "secret" field
+     ![image](https://github.com/user-attachments/assets/f68ee8b4-7983-45d8-accb-ba1c48c49894)
+
 3. Create a .env file following the example:
     ```
     DB_USER=postgres
