@@ -1,10 +1,10 @@
-# canoe_reddit_integration
+# reddit_integration
 
-Canoe Integrations Tech Assessment
+Integrations Tech Assessment
 
 ## Overview
 
-A critical function of Canoe’s business relies on programmatically retrieving documents/data from external sources,
+A critical function of the business relies on programmatically retrieving documents/data from external sources,
 i.e., APIs and Web Portals on behalf of multiple customers.
 These use cases present a number of challenges:
 
@@ -53,7 +53,7 @@ it’s metadata available through an API, we route it to a particular internal t
     DB_PASSWORD=postgres
     DB_HOST=postgres_db
     DB_PORT=5432
-    DB_NAME=canoe_reddit_integration
+    DB_NAME=reddit_integration
     DB_SSLMODE=disable
     
     JWT_KEY=secret
